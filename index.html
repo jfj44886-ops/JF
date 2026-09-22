@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ফরেক্স সেশন অ্যানালাইজার — বাংলাদেশ টাইম জোন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Bengali:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0F14;
+    --panel:#121821;
+    --panel-2:#171F2A;
+    --line:#242E3B;
+    --text:#E7ECF2;
+    --muted:#8A97A6;
+    --excellent:#3FBF7F;
+    --excellent-dim:#3FBF7F26;
+    --good:#4C9FE8;
+    --good-dim:#4C9FE826;
+    --moderate:#C9A15A;
+    --moderate-dim:#C9A15A26;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans Bengali','IBM Plex Sans',sans-serif;
+    min-height:100vh;
+    padding:28px 16px 60px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:640px;}
+
+  .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:22px;
+  }
+  .brand{
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--muted);
+  }
+  .brand b{color:var(--text);font-weight:600;}
+  .zone-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    border:1px solid var(--line);
+    padding:3px 8px;
+    border-radius:3px;
+  }
+
+  .clock-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:26px 24px;
+    margin-bottom:16px;
+  }
+  .clock-label{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .clock-time{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:52px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    line-height:1;
+    color:var(--text);
+  }
+  .clock-date{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+
+  .status-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:20px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+  }
+  .badge{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:4px;
+    white-space:nowrap;
+  }
+  .badge.excellent{background:var(--excellent-dim);color:var(--excellent);}
+  .badge.good{background:var(--good-dim);color:var(--good);}
+  .badge.moderate{background:var(--moderate-dim);color:var(--moderate);}
+  .status-text{font-size:14px;color:var(--text);}
+  .status-text .sub{color:var(--muted);font-size:13px;display:block;margin-top:2px;}
+
+  .timeline-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 24px 18px;
+    margin-bottom:16px;
+  }
+  .section-title{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:14px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .bar-outer{
+    position:relative;
+    height:34px;
+    border-radius:5px;
+    overflow:hidden;
+    display:flex;
+    border:1px solid var(--line);
+  }
+  .seg{height:100%;}
+  .seg.excellent{background:var(--excellent);}
+  .seg.good{background:var(--good);}
+  .seg.moderate{background:var(--moderate);}
+  .now-marker{
+    position:absolute;
+    top:-4px;
+    bottom:-4px;
+    width:2px;
+    background:#fff;
+  }
+  .now-marker::before{
+    content:'';
+    position:absolute;
+    top:-6px;
+    left:50%;
+    transform:translateX(-50%);
+    width:0;height:0;
+    border-left:5px solid transparent;
+    border-right:5px solid transparent;
+    border-top:6px solid #fff;
+  }
+  .hour-ticks{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--muted);
+  }
+  .legend{
+    display:flex;
+    gap:18px;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .dot{width:9px;height:9px;border-radius:2px;}
+  .dot.excellent{background:var(--excellent);}
+  .dot.good{background:var(--good);}
+  .dot.moderate{background:var(--moderate);}
+
+  .sessions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .session-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .session-left{display:flex;align-items:center;gap:12px;}
+  .session-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .session-dot.open{background:var(--excellent);box-shadow:0 0 0 3px var(--excellent-dim);}
+  .session-dot.closed{background:#3B4453;}
+  .session-name{font-size:15px;font-weight:600;}
+  .session-time{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .session-right{text-align:right;}
+  .session-state{
+    font-size:12px;
+    font-weight:600;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .session-state.open{color:var(--excellent);}
+  .session-state.closed{color:var(--muted);}
+  .session-countdown{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .pair-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    color:var(--text);
+    background:var(--panel-2);
+  }
+
+  .pairs-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    margin-bottom:16px;
+  }
+  .pairs-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .pairs-row:last-child{border-bottom:none;padding-bottom:0;}
+  .pairs-row:first-child{padding-top:0;}
+  .pairs-time{
+    flex-shrink:0;
+    width:112px;
+  }
+  .pairs-time .t{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text);
+    font-weight:600;
+  }
+  .pairs-time .l{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .pairs-body{flex:1;}
+  .pairs-body .desc{font-size:12px;color:var(--muted);margin-bottom:8px;}
+
+  .ticker-wrap{
+    max-width:640px;
+    margin:0 auto 18px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+
+  .tv-fallback{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    padding:16px;
+    text-align:center;
+  }
+
+  .open-banner{
+    max-width:640px;
+    margin:0 auto 14px;
+    background:var(--moderate-dim);
+    border:1px solid var(--moderate);
+    border-radius:8px;
+    padding:12px 16px;
+    font-size:12px;
+    color:var(--text);
+    line-height:1.6;
+  }
+  .open-banner b{color:var(--moderate);}
+
+  .link-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    padding:7px 12px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    color:var(--text);
+    background:var(--panel-2);
+    text-decoration:none;
+  }
+  .link-chip:hover{border-color:var(--good);color:var(--good);}
+  .link-chip .arrow{color:var(--muted);}
+  .link-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .hub-links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .hub-link{
+    flex:1;
+    min-width:150px;
+    display:block;
+    text-decoration:none;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+    background:var(--panel-2);
+  }
+  .hub-link:hover{border-color:var(--excellent);}
+  .hub-link .h-title{font-size:13px;font-weight:600;color:var(--text);}
+  .hub-link .h-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  .chart-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 20px 16px;
+    margin-bottom:16px;
+  }
+  .chart-intro{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+    margin:-4px 0 14px;
+  }
+  .chart-box{
+    height:480px;
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .chart-legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:12px;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .chart-legend b{color:var(--text);}
+
+  .momentum-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 20px 8px;
+    margin-bottom:16px;
+  }
+  .momentum-intro{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+    margin:-4px 0 16px;
+  }
+  .momentum-group-title{
+    font-size:12px;
+    font-weight:600;
+    color:var(--text);
+    margin:18px 0 10px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .momentum-group-title .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  .widget-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  @media (max-width:480px){
+    .widget-grid{grid-template-columns:1fr;}
+  }
+  .widget-box{
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--panel-2);
+  }
+  .widget-box .wlabel{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    color:var(--text);
+    padding:8px 10px 0;
+  }
+
+  .foot-note{
+    margin-top:20px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="open-banner">
+    <b>জরুরি নোট:</b> এই পেজের লাইভ চার্ট ও মোমেন্টাম গেজ কাজ করার জন্য ফাইলটা একটা ওয়েবসাইট (https://...) হিসেবে খোলা লাগবে — সরাসরি লোকাল ফাইল (file://) হিসেবে ডাবল-ক্লিক করে খুললে এগুলো কখনো লোড হবে না। নিচে ফ্রি হোস্টিং করার সহজ ধাপ দেওয়া আছে।
+  </div>
+
+  <div class="top">
+    <div class="brand"><b>সেশন অ্যানালাইজার</b> · ফরেক্স মার্কেট</div>
+    <div class="zone-tag">UTC+6 · ঢাকা</div>
+  </div>
+
+  <div class="clock-card">
+    <div class="clock-label">বাংলাদেশ সময় এখন</div>
+    <div class="clock-time" id="clock">--:--:--</div>
+    <div class="clock-date" id="dateline">—</div>
+
+    <div class="status-row">
+      <span class="badge" id="statusBadge">—</span>
+      <div class="status-text">
+        <span id="statusText">লোড হচ্ছে…</span>
+        <span class="sub" id="statusSub"></span>
+      </div>
+    </div>
+    <div class="pair-chips" id="statusPairs"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="section-title">
+      <span>লাইভ চার্ট — সাপোর্ট/রেজিস্ট্যান্স + মোমেন্টাম + ট্রেন্ড</span>
+      <span>TradingView</span>
+    </div>
+    <div class="chart-intro">
+      চার্টে তিনটা রিয়েল ইন্ডিকেটর প্রি-লোড করা আছে: <b>Pivot Points</b> (লাইভ প্রাইস থেকে গণনা করা S1/S2/S3, R1/R2/R3 সাপোর্ট-রেজিস্ট্যান্স লেভেল), <b>MACD</b> ও <b>RSI</b> (মোমেন্টাম/ট্রেন্ড)। উপরের সিম্বল বক্সে ক্লিক করে যেকোনো পেয়ারে বদলাতে পারবেন। এটা একটা রিয়েল-টাইম টেকনিক্যাল ভিউ — কেনা-বেচার নিশ্চিত সিদ্ধান্ত না, নিজে বিশ্লেষণ করার একটা রেফারেন্স।
+    </div>
+    <div class="chart-box">
+      <div class="tradingview-widget-container" style="height:100%;width:100%">
+        <div class="tradingview-widget-container__widget" style="height:100%;width:100%"><div class="tv-fallback">চার্ট লোড হচ্ছে…</div></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+        {
+        "autosize": true,
+        "symbol": "FX:EURUSD",
+        "interval": "15",
+        "timezone": "Asia/Dhaka",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "allow_symbol_change": true,
+        "studies": [
+          "Pivot Points Standard@tv-basicstudies",
+          "MACD@tv-basicstudies",
+          "RSI@tv-basicstudies"
+        ],
+        "support_host": "https://www.tradingview.com"
+        }
+        </script>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <span><b>Pivot Points</b> — সাপোর্ট/রেজিস্ট্যান্স লেভেল</span>
+      <span><b>MACD</b> — ট্রেন্ড মোমেন্টাম</span>
+      <span><b>RSI</b> — ওভারবট/ওভারসোল্ড মোমেন্টাম</span>
+    </div>
+  </div>
+
+  <div class="momentum-card">
+    <div class="section-title">
+      <span>লাইভ মার্কেট মোমেন্টাম</span>
+      <span>রিয়েল-টাইম ইন্ডিকেটর</span>
+    </div>
+    <div class="momentum-intro">
+      নিচের প্রতিটা বক্স TradingView-এর লাইভ ডেটা থেকে সরাসরি আসা — Moving Average ও Oscillator মিলিয়ে গণনা করা প্রকৃত টেকনিক্যাল সিগন্যাল (Strong Buy / Buy / Neutral / Sell / Strong Sell)। ইন্টারভাল ট্যাব দিয়ে টাইমফ্রেম বদলাতে পারবেন। এটা পরবর্তী ক্যান্ডেলের নিশ্চিত ভবিষ্যদ্বাণী না — বর্তমান মোমেন্টামের একটা রিয়েল-টাইম রিডিং।
+    </div>
+
+    <div class="momentum-group-title"><span>এশিয়ান সেশন (সিডনি + টোকিও)</span><span class="tag">moderate</span></div>
+    <div class="widget-grid">
+      <div class="widget-box"><div class="wlabel">AUD/JPY</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:AUDJPY","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">NZD/JPY</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:NZDJPY","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">AUD/USD</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:AUDUSD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">USD/JPY</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:USDJPY","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="momentum-group-title"><span>লন্ডন সেশন</span><span class="tag">good</span></div>
+    <div class="widget-grid">
+      <div class="widget-box"><div class="wlabel">EUR/USD</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:EURUSD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">GBP/USD</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:GBPUSD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">EUR/GBP</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:EURGBP","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">USD/CHF</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:USDCHF","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="momentum-group-title"><span>লন্ডন+নিউইয়র্ক ওভারল্যাপ (সর্বোচ্চ)</span><span class="tag">excellent</span></div>
+    <div class="momentum-intro" style="margin-top:-4px;">এই সময় উপরের EUR/USD, GBP/USD, USD/JPY-ও সবচেয়ে বেশি অ্যাক্টিভ থাকে — সাথে নিচের দুটো:</div>
+    <div class="widget-grid">
+      <div class="widget-box"><div class="wlabel">USD/CAD</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:USDCAD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">GBP/JPY</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"FX:GBPJPY","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="momentum-group-title"><span>অন্যান্য এসেট</span><span class="tag">asset</span></div>
+    <div class="widget-grid">
+      <div class="widget-box"><div class="wlabel">GOLD (XAU/USD)</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"TVC:GOLD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+      <div class="widget-box"><div class="wlabel">BTC/USD</div>
+        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"><div class="tv-fallback">লোড হচ্ছে…</div></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+          {"interval":"15m","width":"100%","isTransparent":true,"height":"170","symbol":"BITSTAMP:BTCUSD","showIntervalTabs":true,"displayMode":"single","locale":"en","colorTheme":"dark"}
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timeline-card">
+    <div class="section-title">
+      <span>২৪ ঘণ্টার টাইমলাইন</span>
+      <span>বাংলাদেশ সময়</span>
+    </div>
+    <div class="bar-outer" id="bar"></div>
+    <div class="hour-ticks">
+      <span>০০</span><span>০৪</span><span>০৮</span><span>১২</span><span>১৬</span><span>২০</span><span>২৪</span>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="dot excellent"></span> চমৎকার — লন্ডন+নিউইয়র্ক ওভারল্যাপ</div>
+      <div class="legend-item"><span class="dot good"></span> ভালো — একক মেজর সেশন সক্রিয়</div>
+      <div class="legend-item"><span class="dot moderate"></span> মাঝারি — এশিয়ান সেশন, কম ভোলাটিলিটি</div>
+    </div>
+  </div>
+
+  <div class="pairs-card">
+    <div class="section-title">
+      <span>কোন সময় কোন পেয়ার ভালো কাজ করে</span>
+      <span>BD সময়</span>
+    </div>
+    <div id="pairsList"></div>
+  </div>
+
+  <div class="sessions" id="sessions"></div>
+
+  <div class="foot-note">
+    সময়গুলো আদর্শ (standard) সেশন সময়ের ভিত্তিতে হিসাব করা — লন্ডন ও নিউইয়র্কে ডে-লাইট সেভিং শুরু/শেষ হলে প্রকৃত সময় ১ ঘণ্টা এদিক-ওদিক হতে পারে। "চমৎকার/ভালো/মাঝারি" রেটিং এবং পেয়ার তালিকা মার্কেটের সাধারণ লিকুইডিটি ও ভোলাটিলিটির চিরাচরিত প্যাটার্ন অনুযায়ী — এটা কোন পেয়ার কিনবেন/বেচবেন তার পরামর্শ নয়, শুধু কোন সময় কোন পেয়ারে সাধারণত বেশি নড়াচড়া থাকে তার একটা রেফারেন্স।<br><br>
+    "লাইভ বিশ্লেষণ" অংশের লিঙ্কগুলো ক্লিক করলে TradingView-এর নিজস্ব ওয়েবসাইট খোলে, যেখানে প্রকৃত Moving Average/Oscillator/Pivot Points ক্যালকুলেশনের লাইভ সারাংশ দেখা যায়। পরবর্তী ক্যান্ডেল সত্যিকারভাবে আপ হবে না ডাউন হবে, তার কোনো নিশ্চিত ভবিষ্যদ্বাণী কোনো বৈধ পদ্ধতিতেই সম্ভব না, তাই এমন কিছু এখানে দাবি করা হচ্ছে না।
+  </div>
+
+</div>
+
+<script>
+// Sessions defined in Bangladesh local hours (UTC+6, no DST), as [startHour, endHour) in 24h float, may wrap past 24.
+const sessions = [
+  { name: 'সিডনি',    nameEn:'Sydney',   start: 4,  end: 13 },
+  { name: 'টোকিও',    nameEn:'Tokyo',    start: 6,  end: 15 },
+  { name: 'লন্ডন',    nameEn:'London',   start: 14, end: 23 },
+  { name: 'নিউইয়র্ক', nameEn:'New York', start: 19, end: 28 } // 28 = 04:00 next day
+];
+
+// Rating segments across 24h BD time: [startHour, endHour, tier, label]
+const ratingSegments = [
+  { start:0,  end:4,  tier:'good',      label:'নিউইয়র্ক একা সক্রিয়',
+    pairs:['USD/CAD','EUR/USD','GBP/USD','USD/JPY'],
+    note:'নিউইয়র্ক সেশনের শেষভাগ — উত্তর আমেরিকার পেয়ারগুলোয় ভালো মুভমেন্ট থাকে।' },
+  { start:4,  end:6,  tier:'moderate',  label:'সিডনি একা সক্রিয়',
+    pairs:['AUD/USD','NZD/USD','AUD/NZD'],
+    note:'দিনের সবচেয়ে শান্ত সময়ের একটা — শুধু ওশেনিয়া পেয়ারে সামান্য নড়াচড়া।' },
+  { start:6,  end:13, tier:'moderate',  label:'সিডনি + টোকিও ওভারল্যাপ',
+    pairs:['AUD/JPY','NZD/JPY','AUD/USD','USD/JPY'],
+    note:'এশিয়ান সেশন — ইয়েন-ভিত্তিক ও অস্ট্রেলিয়ান পেয়ারে তুলনামূলক বেশি অ্যাক্টিভিটি।' },
+  { start:13, end:14, tier:'moderate',  label:'টোকিও একা সক্রিয়',
+    pairs:['USD/JPY','EUR/JPY','GBP/JPY'],
+    note:'টোকিও সেশনের শেষভাগ, লন্ডন খোলার ঠিক আগে।' },
+  { start:14, end:15, tier:'good',      label:'টোকিও + লন্ডন ওভারল্যাপ',
+    pairs:['EUR/JPY','GBP/JPY','EUR/USD','USD/JPY'],
+    note:'দুই সেশনের সংযোগস্থল — ইয়েন ক্রস পেয়ারে ভোলাটিলিটি বাড়ে।' },
+  { start:15, end:19, tier:'good',      label:'লন্ডন একা সক্রিয়',
+    pairs:['EUR/USD','GBP/USD','EUR/GBP','USD/CHF'],
+    note:'ইউরোপিয়ান সেশনের মূল অংশ — ইউরো ও পাউন্ড পেয়ারে ভালো লিকুইডিটি।' },
+  { start:19, end:23, tier:'excellent', label:'লন্ডন + নিউইয়র্ক ওভারল্যাপ — সর্বোচ্চ লিকুইডিটি',
+    pairs:['EUR/USD','GBP/USD','USD/JPY','USD/CAD','GBP/JPY'],
+    note:'দিনের সবচেয়ে ব্যস্ত সময় — মেজর সব পেয়ারেই সর্বোচ্চ ভলিউম ও ভোলাটিলিটি থাকে।' },
+  { start:23, end:24, tier:'good',      label:'নিউইয়র্ক একা সক্রিয়',
+    pairs:['EUR/USD','USD/CAD','USD/JPY'],
+    note:'লন্ডন বন্ধ হওয়ার পর নিউইয়র্ক একাই বাজার চালায়।' },
+];
+
+const tierLabel = { excellent:'চমৎকার', good:'ভালো', moderate:'মাঝারি' };
+
+function bdHourFloat(now){
+  // Get Asia/Dhaka time regardless of viewer's browser timezone
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone:'Asia/Dhaka', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  }).formatToParts(now);
+  const h = parseInt(parts.find(p=>p.type==='hour').value,10) % 24;
+  const m = parseInt(parts.find(p=>p.type==='minute').value,10);
+  const s = parseInt(parts.find(p=>p.type==='second').value,10);
+  return { h, m, s, f: h + m/60 + s/3600 };
+}
+
+function fmtBDClock(now){
+  return new Intl.DateTimeFormat('bn-BD', {
+    timeZone:'Asia/Dhaka', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  }).format(now);
+}
+function fmtBDDate(now){
+  return new Intl.DateTimeFormat('bn-BD', {
+    timeZone:'Asia/Dhaka', weekday:'long', year:'numeric', month:'long', day:'numeric'
+  }).format(now);
+}
+function fmtHM(hFloat){
+  let h = Math.floor(hFloat) % 24;
+  let m = Math.round((hFloat - Math.floor(hFloat)) * 60);
+  if(m === 60){ m = 0; h = (h+1)%24; }
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+function isOpen(sess, hf){
+  if(sess.end <= 24){
+    return hf >= sess.start && hf < sess.end;
+  } else {
+    // wraps past midnight
+    return hf >= sess.start || hf < (sess.end - 24);
+  }
+}
+
+function buildBar(){
+  const bar = document.getElementById('bar');
+  bar.innerHTML = '';
+  ratingSegments.forEach(seg=>{
+    const el = document.createElement('div');
+    el.className = 'seg ' + seg.tier;
+    el.style.width = ((seg.end - seg.start) / 24 * 100) + '%';
+    bar.appendChild(el);
+  });
+  const marker = document.createElement('div');
+  marker.className = 'now-marker';
+  marker.id = 'nowMarker';
+  bar.appendChild(marker);
+}
+
+function buildPairsList(){
+  const wrap = document.getElementById('pairsList');
+  wrap.innerHTML = '';
+  ratingSegments.forEach(seg=>{
+    const row = document.createElement('div');
+    row.className = 'pairs-row';
+    const chips = seg.pairs.map(p => `<span class="chip">${p}</span>`).join('');
+    row.innerHTML = `
+      <div class="pairs-time">
+        <div class="t">${fmtHM(seg.start)}–${fmtHM(seg.end % 24)}</div>
+        <div class="l">${tierLabel[seg.tier]}</div>
+      </div>
+      <div class="pairs-body">
+        <div class="desc">${seg.note}</div>
+        <div class="pair-chips">${chips}</div>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function currentRating(hf){
+  for(const seg of ratingSegments){
+    if(hf >= seg.start && hf < seg.end) return seg;
+  }
+  return ratingSegments[0];
+}
+
+function buildSessionCards(){
+  const wrap = document.getElementById('sessions');
+  wrap.innerHTML = '';
+  sessions.forEach(sess=>{
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    card.dataset.name = sess.name;
+    card.innerHTML = `
+      <div class="session-left">
+        <span class="session-dot" id="dot-${sess.nameEn}"></span>
+        <div>
+          <div class="session-name">${sess.name}</div>
+          <div class="session-time">${fmtHM(sess.start)} – ${fmtHM(sess.end % 24)} (BD)</div>
+        </div>
+      </div>
+      <div class="session-right">
+        <div class="session-state" id="state-${sess.nameEn}">—</div>
+        <div class="session-countdown" id="cd-${sess.nameEn}"></div>
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+function minutesToText(mins){
+  const h = Math.floor(mins/60);
+  const m = Math.round(mins%60);
+  if(h > 0) return `${h}ঘ ${m}মি`;
+  return `${m} মিনিট`;
+}
+
+function tick(){
+  const now = new Date();
+  const { f: hf } = bdHourFloat(now);
+
+  document.getElementById('clock').textContent = fmtBDClock(now);
+  document.getElementById('dateline').textContent = fmtBDDate(now);
+
+  // marker position
+  const marker = document.getElementById('nowMarker');
+  if(marker) marker.style.left = (hf/24*100) + '%';
+
+  // rating / status
+  const rating = currentRating(hf);
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'badge ' + rating.tier;
+  badge.textContent = tierLabel[rating.tier];
+  document.getElementById('statusText').textContent = rating.label;
+
+  // time left in this rating window
+  const remain = (rating.end - hf) * 60;
+  document.getElementById('statusSub').textContent = `আরও ${minutesToText(remain)} পর পরিবর্তিত হবে`;
+  document.getElementById('statusPairs').innerHTML = rating.pairs.map(p => `<span class="chip">${p}</span>`).join('');
+
+  // session cards
+  sessions.forEach(sess=>{
+    const open = isOpen(sess, hf);
+    const dot = document.getElementById('dot-' + sess.nameEn);
+    const state = document.getElementById('state-' + sess.nameEn);
+    const cd = document.getElementById('cd-' + sess.nameEn);
+    dot.className = 'session-dot ' + (open ? 'open' : 'closed');
+    state.className = 'session-state ' + (open ? 'open' : 'closed');
+    state.textContent = open ? 'খোলা' : 'বন্ধ';
+
+    let targetMins;
+    if(open){
+      let end = sess.end;
+      let diff = end - hf;
+      if(diff < 0) diff += 24;
+      targetMins = diff * 60;
+      cd.textContent = `বন্ধ হবে ${minutesToText(targetMins)} পর`;
+    } else {
+      let start = sess.start;
+      let diff = start - hf;
+      if(diff <= 0) diff += 24;
+      targetMins = diff * 60;
+      cd.textContent = `খুলবে ${minutesToText(targetMins)} পর`;
+    }
+  });
+}
+
+buildBar();
+buildSessionCards();
+buildPairsList();
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
